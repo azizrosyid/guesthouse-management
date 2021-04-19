@@ -27,7 +27,7 @@ struct dataGuestRoom
     int guestId;
     int priceRoom;
     string typeRoom;
-    bool statusRoom;
+    bool statusRoom = 1;
 
     void resetRoom()
     {
@@ -94,18 +94,29 @@ int menu()
          << "0. Keluar" << endl;
     return inputNumber("Masukkan Pilihan [0-4] : ", 0, 4);
 }
-int main()
+
+void addDataGuestRoom(dataGuestRoom (&arrDataRoom)[MAX_ROOM])
 {
-    // initiate data room
-    dataGuestRoom arrDataRoom[MAX_ROOM];
     string arrRoomName[4] = {"Single room", "Double room", "Twin room", "Triple room"};
     int arrPriceRoom[MAX_ROOM] = {10000, 20000, 30000, 40000};
     for (int i = 0; i < MAX_ROOM; i++)
     {
         arrDataRoom[i].priceRoom = arrPriceRoom[i];
         arrDataRoom[i].typeRoom = arrRoomName[i];
-        arrDataRoom[i].statusRoom = 1;
     }
+}
+
+void showDetailTrx(int guestId, dataTransaction (&arrDataTrx)[MAX_TRANSACTION])
+{
+    cout << "Kode Pesanan : " << guestId << endl;
+    arrDataTrx[guestId].getInfo();
+}
+
+int main()
+{
+    // initiate data room
+    dataGuestRoom arrDataRoom[MAX_ROOM];
+    addDataGuestRoom(arrDataRoom);
 
     dataTransaction arrDataTrx[MAX_TRANSACTION];
     int lengthDataTrx = 0;
@@ -141,6 +152,7 @@ int main()
                 arrDataTrx[lengthDataTrx].totalPrice = roomReservation.priceRoom * arrDataTrx[lengthDataTrx].lengthStay;
                 roomReservation.statusRoom = 0;
                 roomReservation.guestId = lengthDataTrx;
+
                 arrDataTrx[lengthDataTrx].getInfo();
                 lengthDataTrx++;
             }
@@ -148,6 +160,8 @@ int main()
             {
                 cout << "Kamar sudah terbooking semua!" << endl;
             }
+            cout << endl;
+            cin.ignore();
         }
         else if (choice == 2)
         {
@@ -165,9 +179,7 @@ int main()
                     cout << "Status Kamar : " << (arrDataRoom[i].statusRoom ? "Available" : "Booked") << endl;
                     if (filterStatus == 0)
                     {
-                        int idTransaction = arrDataRoom[i].guestId;
-                        cout << "Kode Pesanan : " << idTransaction << endl;
-                        arrDataTrx[idTransaction].getInfo();
+                        showDetailTrx(arrDataRoom[i].guestId, arrDataTrx);
                     }
                 }
             }
@@ -176,6 +188,8 @@ int main()
             {
                 cout << "Tidak Ada kamar yang " << (filterStatus ? "Available" : "Booked") << endl;
             }
+            cout << endl;
+            cin.ignore();
         }
         else if (choice == 3)
         {
@@ -183,30 +197,41 @@ int main()
             bool isBookingRoom = 0;
             for (int i = 0; i < MAX_ROOM; i++)
             {
-                if (!arrDataRoom[i].statusRoom)
+                if (arrDataRoom[i].statusRoom == 0)
                 {
                     isBookingRoom = 1;
                     cout << "Kamar " << i + 1 << endl;
                     cout << "Status Kamar : " << (arrDataRoom[i].statusRoom ? "Available" : "Booked") << endl;
-                    int idTransaction = arrDataRoom[i].guestId;
-                    cout << "Kode Pesanan : " << idTransaction << endl;
-                    arrDataTrx[idTransaction].getInfo();
+                    showDetailTrx(arrDataRoom[i].guestId, arrDataTrx);
+                    cout << endl;
                 }
             }
 
             if (isBookingRoom)
             {
                 choiceRoom = inputNumber("Pilih kamar yang ingin diselesaikan [1-4] : ", 1, 4);
-                int idTransaction = arrDataRoom[choiceRoom - 1].guestId;
-                arrDataTrx[idTransaction].isExit = true;
-                arrDataRoom[choiceRoom - 1].resetRoom();
-                cout << "Kamar " << choiceRoom << endl;
-                cout << "Status Kamar : " << (arrDataRoom[choiceRoom - 1].statusRoom ? "Available" : "Booked") << endl;
+                if (!arrDataRoom[choiceRoom - 1].statusRoom)
+                {
+                    int idTransaction = arrDataRoom[choiceRoom - 1].guestId;
+                    arrDataTrx[idTransaction].isExit = true;
+                    arrDataTrx[idTransaction].getInfo();
+                    arrDataRoom[choiceRoom - 1].resetRoom();
+                    cout << endl
+                         << "Status Kamar " << choiceRoom << " sudah terubah!" << endl;
+                    cout << "Kamar " << choiceRoom << endl;
+                    cout << "Status Kamar : " << (arrDataRoom[choiceRoom - 1].statusRoom ? "Available" : "Booked") << endl;
+                }
+                else
+                {
+                    cout << "Kamar masih tersedia !" << endl;
+                }
             }
             else
             {
                 cout << "Tidak Ada Kamar yang sedang di Booking!" << endl;
             }
+            cout << endl;
+            cin.ignore();
         }
         else if (choice == 4)
         {
@@ -214,27 +239,34 @@ int main()
             int choiceRoom = inputNumber("Pilih kamar untuk melihat detail Kamar [1-4] : ", 1, 4);
             cout << "Kamar " << choiceRoom << endl;
             arrDataRoom[choiceRoom - 1].getInfo();
+            cout << endl;
 
             cout << "History Pemesanan : " << endl;
             bool isHistory = 0;
             for (int i = 0; i < MAX_TRANSACTION; i++)
             {
                 dataTransaction &dataTrx = arrDataTrx[i];
-                if (!dataTrx.name.empty())
+                if (dataTrx.roomId == choiceRoom)
                 {
-                    isHistory = 1;
-                    dataTrx.getInfo();
-                    cout << endl;
-                }
-                else
-                {
-                    break;
+
+                    if (!dataTrx.name.empty())
+                    {
+                        isHistory = 1;
+                        dataTrx.getInfo();
+                        cout << endl;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
             if (!isHistory)
             {
                 cout << "Tidak ada Histori Pemesanan" << endl;
             }
+            cout << endl;
+            cin.ignore();
         }
 
     } while (choice != 0);
