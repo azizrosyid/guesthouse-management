@@ -3,6 +3,9 @@
         "xstring": "cpp",
         "system_error": "cpp",
         "xlocale": "cpp",
-        "array": "cpp"
+        "array": "cpp",
+        "regex": "cpp",
+        "ostream": "cpp",
+        "iostream": "cpp"
     }
 }
