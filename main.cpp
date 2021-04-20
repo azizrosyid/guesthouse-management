@@ -1,13 +1,13 @@
 #include <iostream>
-#include <regex> // regex_match, regex
+#include <string>
 #define MAX_ROOM 4
 #define MAX_TRANSACTION 100
 using namespace std;
 
+// struct untuk menampung data pesanan
 struct dataTransaction
 {
     string name;
-    // string guestId;
     int lengthStay;
     int roomId;
     int totalPrice;
@@ -22,6 +22,7 @@ struct dataTransaction
     }
 };
 
+// struct untuk menampung data kamar
 struct dataGuestRoom
 {
     int guestId;
@@ -43,74 +44,12 @@ struct dataGuestRoom
     }
 };
 
-// fungsi untuk menginput string, dengan tambahan pattern regex
-string inputString(string message, string messageFailed, string patternRegex)
-{
-    regex pattern(patternRegex);
-    string result;
-    while (true)
-    {
-        cout << message;
-        getline(cin, result);
-        if (patternRegex.empty())
-            return result;
-        if (!regex_match(result, pattern))
-        {
-            cout << messageFailed << endl;
-            continue;
-        }
-        break;
-    }
-    return result;
-}
-
-// fungsi untuk menginput angka
-int inputNumber(string message, int min, int max)
-{
-    int result;
-    while (true)
-    {
-        cout << message;
-        cin >> result;
-        if (cin.fail() || (result < min || result > max))
-        {
-            cout << "Masukkan Angka yang benar! (" << min << "-" << max << ")" << endl;
-            cin.clear();
-            cin.ignore(100, '\n');
-            continue;
-        }
-        break;
-    }
-    cin.ignore();
-    return result;
-}
-int menu()
-{
-    cout << "Menu Utama" << endl
-         << "1. Input Order" << endl
-         << "2. Cari Kamar" << endl
-         << "3. Penyelesaian Transaksi" << endl
-         << "4. Detail Kamar" << endl
-         << "0. Keluar" << endl;
-    return inputNumber("Masukkan Pilihan [0-4] : ", 0, 4);
-}
-
-void addDataGuestRoom(dataGuestRoom (&arrDataRoom)[MAX_ROOM])
-{
-    string arrRoomName[4] = {"Single room", "Double room", "Twin room", "Triple room"};
-    int arrPriceRoom[MAX_ROOM] = {10000, 20000, 30000, 40000};
-    for (int i = 0; i < MAX_ROOM; i++)
-    {
-        arrDataRoom[i].priceRoom = arrPriceRoom[i];
-        arrDataRoom[i].typeRoom = arrRoomName[i];
-    }
-}
-
-void showDetailTrx(int guestId, dataTransaction (&arrDataTrx)[MAX_TRANSACTION])
-{
-    cout << "Kode Pesanan : " << guestId << endl;
-    arrDataTrx[guestId].getInfo();
-}
+string inputString(string);
+int inputNumber(string, int, int);
+int menu();
+void addDataGuestRoom(dataGuestRoom (&)[MAX_ROOM]);
+void showDetailTrx(int, dataTransaction (&)[MAX_TRANSACTION]);
+void inputTransaction(dataTransaction &, dataGuestRoom &, int, int);
 
 int main()
 {
@@ -118,6 +57,7 @@ int main()
     dataGuestRoom arrDataRoom[MAX_ROOM];
     addDataGuestRoom(arrDataRoom);
 
+    // initiate data transaction
     dataTransaction arrDataTrx[MAX_TRANSACTION];
     int lengthDataTrx = 0;
     int choice;
@@ -127,6 +67,7 @@ int main()
         choice = menu();
         if (choice == 1)
         {
+            // mengecek apakah masih ada kamar kosong
             bool isAvailableRoom = 0;
             for (int i = 0; i < MAX_ROOM; i++)
             {
@@ -139,21 +80,18 @@ int main()
 
             if (isAvailableRoom)
             {
+                // input room id hingga memilih room yang kosong
                 int tempRoomId;
-                arrDataTrx[lengthDataTrx].name = inputString("Masukkan Nama Pemesan : ", "Format Nama salah!", "^[A-Za-z ]+[^\\s]$");
                 do
                 {
                     tempRoomId = inputNumber("Masukkan ID Kamar : ", 1, 4);
                 } while (arrDataRoom[tempRoomId - 1].statusRoom == 0 && cout << "Kamar Telah Dibooking!" << endl);
 
-                arrDataTrx[lengthDataTrx].roomId = tempRoomId;
                 dataGuestRoom &roomReservation = arrDataRoom[tempRoomId - 1];
-                arrDataTrx[lengthDataTrx].lengthStay = inputNumber("Masukkan Jumlah Hari Menginap : ", 0, 31);
-                arrDataTrx[lengthDataTrx].totalPrice = roomReservation.priceRoom * arrDataTrx[lengthDataTrx].lengthStay;
-                roomReservation.statusRoom = 0;
-                roomReservation.guestId = lengthDataTrx;
+                dataTransaction &dataTrx = arrDataTrx[lengthDataTrx];
+                inputTransaction(dataTrx, roomReservation, lengthDataTrx, tempRoomId);
 
-                arrDataTrx[lengthDataTrx].getInfo();
+                dataTrx.getInfo();
                 lengthDataTrx++;
             }
             else
@@ -181,6 +119,7 @@ int main()
                     {
                         showDetailTrx(arrDataRoom[i].guestId, arrDataTrx);
                     }
+                    cout << endl;
                 }
             }
 
@@ -248,17 +187,16 @@ int main()
                 dataTransaction &dataTrx = arrDataTrx[i];
                 if (dataTrx.roomId == choiceRoom)
                 {
-
                     if (!dataTrx.name.empty())
                     {
                         isHistory = 1;
                         dataTrx.getInfo();
                         cout << endl;
                     }
-                    else
-                    {
-                        break;
-                    }
+                }
+                else if (dataTrx.name.empty())
+                {
+                    break;
                 }
             }
             if (!isHistory)
@@ -272,4 +210,74 @@ int main()
     } while (choice != 0);
 
     return 0;
+}
+
+// fungsi untuk menginput string, dengan tambahan pattern regex
+string inputString(string message)
+{
+    string result;
+    cout << message;
+    getline(cin, result);
+    return result;
+}
+
+// fungsi untuk menginput angka
+int inputNumber(string message, int min, int max)
+{
+    int result;
+    while (true)
+    {
+        cout << message;
+        cin >> result;
+        if (cin.fail() || (result < min || result > max))
+        {
+            cout << "Masukkan Angka yang benar! (" << min << "-" << max << ")" << endl;
+            cin.clear();
+            cin.ignore(100, '\n');
+            continue;
+        }
+        break;
+    }
+    cin.ignore();
+    return result;
+}
+int menu()
+{
+    cout << "Menu Utama" << endl
+         << "1. Input Order" << endl
+         << "2. Cari Kamar" << endl
+         << "3. Penyelesaian Transaksi" << endl
+         << "4. Detail Kamar" << endl
+         << "0. Keluar" << endl;
+    return inputNumber("Masukkan Pilihan [0-4] : ", 0, 4);
+}
+
+// fungsi untuk menginput data ke data kamar
+void addDataGuestRoom(dataGuestRoom (&arrDataRoom)[MAX_ROOM])
+{
+    string arrRoomName[4] = {"Single room", "Double room", "Twin room", "Triple room"};
+    int arrPriceRoom[MAX_ROOM] = {10000, 20000, 30000, 40000};
+    for (int i = 0; i < MAX_ROOM; i++)
+    {
+        arrDataRoom[i].priceRoom = arrPriceRoom[i];
+        arrDataRoom[i].typeRoom = arrRoomName[i];
+    }
+}
+
+// fungsi untuk melihat detail transaksi
+void showDetailTrx(int guestId, dataTransaction (&arrDataTrx)[MAX_TRANSACTION])
+{
+    cout << "Kode Pesanan : " << guestId << endl;
+    arrDataTrx[guestId].getInfo();
+}
+
+// fungsi untuk menginput pesanan
+void inputTransaction(dataTransaction &dataTrx, dataGuestRoom &dataGuestRoom, int idTransaction, int roomId)
+{
+    dataTrx.name = inputString("Masukkan Nama Pemesan : ");
+    dataTrx.roomId = roomId;
+    dataTrx.lengthStay = inputNumber("Masukkan Jumlah Hari Menginap : ", 0, 31);
+    dataTrx.totalPrice = dataGuestRoom.priceRoom * dataTrx.lengthStay;
+    dataGuestRoom.statusRoom = 0;
+    dataGuestRoom.guestId = idTransaction;
 }
